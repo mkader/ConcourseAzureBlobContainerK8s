@@ -8,6 +8,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anc-web-api-test", "anc-web-api-test\anc-web-api-test.csproj", "{AC630F10-F592-4468-ABBF-193E56BDB0BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{DEF61C9C-917A-4E8B-9615-8ADC396F9BAD}"
+	ProjectSection(SolutionItems) = preProject
+		ci\pipeline-ve1.yml = ci\pipeline-ve1.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
