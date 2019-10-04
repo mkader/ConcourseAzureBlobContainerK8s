@@ -92,5 +92,5 @@ jobs:
     - run-unit-tests
   - put: azure-container-registry
     params:
-      build: ./source-code/anc-web-api
+      build: ./source-code
       tag_as_latest: true
