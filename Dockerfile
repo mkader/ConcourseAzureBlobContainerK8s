@@ -4,8 +4,8 @@ EXPOSE 80
 
 FROM microsoft/dotnet:2.2-sdk AS build
 WORKDIR /src
-COPY ["anc-web-api/anc-web-api.csproj", "anc-web-api/"]
-RUN dotnet restore "anc-web-api/anc-web-api.csproj"
+COPY anc-web-api/anc-web-api.csproj anc-web-api
+RUN dotnet restore anc-web-api/anc-web-api.csproj
 COPY . .
 WORKDIR "/src/anc-web-api"
 RUN dotnet build "anc-web-api.csproj" -c Release -o /app
