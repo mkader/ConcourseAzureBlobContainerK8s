@@ -2,7 +2,7 @@ source-code-uri: https://github.com/mkader/ConcourseAzureBlobContainerK8s/
 dotnet-core-sdk-tag: '2.2-stretch'
 source-code-api-proj-path: ./source-code/anc-web-api/anc-web-api.csproj 
 source-code-test-proj-path: ./source-code/anc-web-api-test/anc-web-api-test.csproj 
-source-code-ci-folder: ./source-code/seroter-api-k8s/ci
+source-code-ci-folder: ./source-code/ci
 azure-container-registry-repository: ftmyrepository.azurecr.io/anc-web-api-k8s
 azure-container-registry-username: FTMyRepository
 azure-container-registry-password: 7TwDC=wDsMg0v8NFvARN2juln1mPdREE

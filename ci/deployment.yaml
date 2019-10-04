@@ -14,10 +14,10 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: ftmyrepository.azurecr.io/seroter-api-k8s:latest
+        image: ((azure-container-registry-repository)):latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-      imagePullSecrets:
-      - name: acr-auth
-	  restartPolicy: Always
+		imagePullSecrets:
+		- name: acr-auth
+      restartPolicy: Always
