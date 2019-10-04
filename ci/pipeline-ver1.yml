@@ -38,6 +38,8 @@ jobs:
 # After unpausing the pipeline so that it came alive, I saw the "run unit tests" job start running. 
 # It's easy to view what a job is doing, and I saw that it loaded the container image from Microsoft, 
 # mounted the source code, ran my script and turned "green" because all my tests passed.
+
+# source: {repository: mcr.microsoft.com/dotnet/core/sdk}  not working, bcause it takes latest versin, ms released 3.0, i used 2.0
 - name: run-unit-tests
   plan:
   - get: source-code

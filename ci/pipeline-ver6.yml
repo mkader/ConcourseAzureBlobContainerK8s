@@ -14,9 +14,51 @@ resource_types:
   source:
     repository: pcfabr/azure-blobstore-resource
 
+# Generating AKS credentials (11, 12, 13, 14, 15, 16)
+# ============================
+# Recall, we set up a basic AKS cluster. For Concourse to talk to AKS, we need credentials!
+# From within the Azure Portal, I started up an instance of the Cloud Shell. This is a hosted Bash environment with lots of pre-loaded tools. 
+# From here, I used the AKS CLI to get the administrator credentials for my cluster.
+# ervice principal id/secret => 97c55954-4445-4c30-a104-bf21af88b954 =>  rl[bsIhm2Ij9d27W_xBD?ZVHfyDvY-..
+# This command generated a configuration file with URLs, users, certificates, and tokens. I copied this file locally for use later in my pipeline. cat .kube/config
+# az aks get-credentials --name vs-k8s-cluster --resource-group VSP_Resource_Group --admin
+# 11.Creating a role-binding for permission to deploy
+# ================================================
+# https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/
+# The administrative user doesn't automatically have rights to do much in the default cluster namespace. 
+# Without explicitly allowing permissions, you'll get some gnarly "does not have access" errors when doing most anything. 
+# Enter role-based access controls. I created a new rolebinding named "admin" with admin rights in the cluster, and mapped to the existing clusterAdmin user.
+# Now I knew that Concourse could effectively interact with my Kubernetes cluster.
+# kubectl create rolebinding admin --clusterrole=admin --user=clusterAdmin --namespace=default
+# 12.Giving AKS access to Azure Container Registry (ACR)
+# =============================================
+# https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-aks
+# Right now, ACR doesn't support an anonymous access strategy. Everything happens via authenticated users. 
+# The Kubernetes cluster needs access to its container registry, so I followed these instructions to connect ACR to AKS. Pretty easy!
+# 13. Creating Kubernetes deployment and service definitions
+# ======================================================
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+# https://kubernetes.io/docs/concepts/services-networking/service/
+# Concourse is going to apply a Kubernetes deployment to create pods of containers in the cluster. 
+# Then, Concourse will apply a Kubernetes service to expose my pod with a routable endpoint.
+# I created a pair of configurations and added them to the ci folder of my source code. The deployment.yaml looks like:
+# This is a pretty basic deployment definition. It points to the latest image in the ACR and deploys a single instance (replicas: 1).
+# My service.yaml is also fairly simple, and AKS will provision the necessary Azure Load Balancer and public IP addresses.
+# 14.Adding Kubernetes resource definitions to the Concourse pipeline
+# ===================================================================
+# https://github.com/zlabjp/kubernetes-resource
+# First, I added a new resource type to the Concourse pipeline. Because Kubernetes isn't a baked-in resource type. 
+# It's important than the Kubernetes client and server are expecting the same Kubernetes version, so I set the tag to match my AKS version.
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.13"
+
 resources:
 # 1. Pulling source code
 # ======================
+# https://concourse.github.io/dutyfree/
 # declare resources, Gave the resource a name ("source-code") and identified where the code lives. 
 # when i deploy a pipeline, Concourse produces containers that "check" resources on a schedule for any changes that should trigger a pipeline.
 - name: source-code
@@ -44,6 +86,7 @@ resources:
 
 # 6. created for Azure Storage standard resource definition:
 # ===========================================================
+# https://github.com/pivotal-cf/azure-blobstore-resource
 # storage_account_name: ((azure-storage-account-name)), storage_account_key: ((azure-storage-account-key)), container: ftcoreapp
 # Here the "type" matches the resource type name I set earlier. 
 # Then I set the credentials (retrieved from the "Access keys" section in the Azure Portal), container name (pre-created, 
@@ -99,6 +142,26 @@ resources:
     file: {{github-git-file}}
     private_key: {{github-private-key}}
 
+# 15.Next, I had to declare my resource itself. It has references to the credentials we generated earlier.
+# ========================================================================================================
+# https://www.base64decode.org/
+# There are a few key things to note here. First, the "server" refers to the cluster DNS server name in the credentials file. 
+# The "token" refers to the token associated with the clusterAdmin user. For me, it's the last "user" called out in the credentials file. 
+# Finally, let's talk about the certificate authority. This value comes from the "certificate-authority-data" entry associated with the cluster DNS server. 
+# HOWEVER, this value is base64 encoded, and I needed a decoded value. So, I decoded it, and embedded it as you see above.
+# certificate_authority: |  
+# -----BEGIN CERTIFICATE-----
+#     [...]
+#  -----END CERTIFICATE-----
+- name: azure-kubernetes-service
+  type: kubernetes
+  icon: azure
+  source:
+    server: {{azure-kubernetes-service-server}}
+    namespace: default
+    token: {{azure-kubernetes-service-token}}
+    certificate_authority: {{azure-certificate_authority}}
+    
 # list out jobs
 jobs:
 # 2. first job Running unit tests   
@@ -145,7 +208,7 @@ jobs:
           args:
           - -exec
           - |
-            dotnet test {{source-code-test-proj-path}}
+            dotnet test {{source-code-test-proj-path}} 
 
 # 4. second job produces a container
 # ==================================
@@ -168,7 +231,7 @@ jobs:
 # With the pipeline done, I saw that the "version" value in GitHub was incremented by the pipeline, 
 # and most importantly, our Docker image has a version tag.
 # not working fly -t rs set-pipeline -c azure-k8s-rev4.yml -p azure-k8s-rev4 --var "github-private-key=$(cat .ssh/id_rsa)"
-# this works:, Place the private key in gitkey.yml, fly -t rs set-pipeline -c azure-k8s-rev4.yml -p azure-k8s-rev4 --load-vars-from "gitkey.yml"
+# this works:, Place the private key in gitkey.yml, fly -t rs set-pipeline -c azure-k8s-final.yml -p azure-k8s-final --load-vars-from "gitkey.yml" --load-vars-from "azurecertificate.yml"
 - name: containerize-app
   plan:
   - get: source-code
@@ -225,4 +288,86 @@ jobs:
   - put: azure-blobstore
     params:
       file: artifact-repo/((azure-blobstore-versioned-file)) 
+      
+# 16. fourth job deploys to Kubernetes
+# ====================================
+# First, I "get" the ACR resource. When it changes (because it gets a new version of the container), it triggers this job. 
+# It only fires if the "containerize app" job passes first. Then I get the source code (so that I can grab the deployment.yaml and service.yaml files I put in the ci folder), 
+# and I get the semantic version.
+# Next I "put" to the AKS resource, twice. In essence, this resource executes kubectl commands. 
+# The first command does a kubectl apply for both the deployment and service. 
+# On the first run, it provisions the pod and exposes it via a service. However, because the container image tag in the deployment file is to "latest", 
+# Kubernetes actually won't retrieve new images with that tag after I apply a deployment. 
+# So, I "patched" the deployment in a second "put" step and set the deployment's image tag to the semantic version. This triggers a pod refresh!
+# fly -t rs set-pipeline -c azure-k8s-final.yml -p azure-k8s-final --load-vars-from "gitkey.yml" "azurecertificate.yml"
+# piepline is [source-code]-----[run-unit-tests]-----[source-code]-----[containerize    ]-----[azure - container - registry]-----[deploy    ]----[azure-kubernetes-service] 
+#                                                      | [version]-----[            -app]-----[version]            [version]-----[   loy    ] 
+#                                                      V---------------[package-app]-----[azure-blobstore]     [source-code]-----[      -app]
+# did it actually work? In Azure Cloud Shell, I ran a "kubectl get pods" and "kubectl get services" command. 
+# The first showed our running pod, and the second showed the external IP assigned to my pod.- name: deploy-app
+#   mohideen_kader@Azure:~$ kubectl get pods
+#   NAME                       READY   STATUS    RESTARTS   AGE
+#   demo-app-86dddfb97-w9wzc   1/1     Running   0          15h
+#   mohideen_kader@Azure:~$ kubectl get services
+#   NAME         TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)        AGE
+#   demo-app     LoadBalancer   10.0.131.51   137.116.253.17   80:32045/TCP   17h
+#   kubernetes   ClusterIP      10.0.0.1      <none>           443/TCP        21h
+# I also issued a request to that URL in the browser, and got back my ASP.NET Core API results. http://137.116.253.17api/values
+# Whenever I updated my ASP.NET Core source code. It tests the code, packages it up, and deploys it to AKS in seconds.
+# Whatever CI/CD tool you use, invest in automating your path to production.
+- name: deploy-app
+  plan:
+  - get: azure-container-registry
+    trigger: true
+    passed:
+    - containerize-app
+  - get: source-code
+  - get: version
+  - put: azure-kubernetes-service
+    params:
+      # kubectl: get pods
+      kubectl: apply -f ((source-code-ci-folder))/deployment.yaml -f ((source-code-ci-folder))/service.yaml
+  - put: azure-kubernetes-service
+    params:
+      kubectl: |
+        patch deployment demo-app -p '{"spec":{"template":{"spec":{"containers":[{"name":"demo-app","image":"((azure-container-registry-repository)):'$(cat ((github-git-branch))/((github-git-file)))'"}]}}}}'
 
+
+# run local powershell
+# ====================
+# kubectl config get-contexts
+# kubectl get secrets
+# az aks get-credentials --resource-group VSP_Resource_Group --name vs-k8s-cluster
+# kubectl create secret docker-registry acr-auth --docker-server <registry_Login_server> --docker-username <registry_username> --docker-password <registry_password> --docker-email mohideen.kader@titletec.com
+# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mohideen.kader@titletec.com
+# run azure k8s dashboadrd > az aks browse --resource-group VSP_Resource_Group --name VS-k8s-Cluster
+#    Proxy running on http://127.0.0.1:8001/
+# run azure docker image > docker run ftmyrepository.azurecr.io/seroter-api-k8s:latest
+
+# run azure bash 
+# ==============
+# to run azure k8s dashboadrd $ az aks browse --resource-group VSP_Resource_Group --name VS-k8s-Cluster
+#    To view the console, please open https://gateway11.southcentralus.console.azure.com/n/cc-6a8dba8d/cc-6a8dba8d/proxy/8001/ in a new tab
+#
+
+# links
+# ======
+# https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-aks
+# https://docs.microsoft.com/en-us/azure/aks/kubernetes-dashboard
+# https://supergiant.io/blog/how-to-debug-kubernetes-applications/
+# https://concourse-ci.org/
+# #!/bin/bash
+
+# AKS_RESOURCE_GROUP=VSP_Resource_Group
+# AKS_CLUSTER_NAME=vs-k8s-cluster
+# ACR_RESOURCE_GROUP=VSP_Resource_Group
+# ACR_NAME=FTMyRepository
+
+# # Get the id of the service principal configured for AKS
+#CLIENT_ID=$(az aks show --resource-group $AKS_RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query "servicePrincipalProfile.clientId" --output tsv)
+
+# # Get the ACR registry resource id
+# ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
+
+# # Create role assignment
+# az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID

@@ -1,0 +1,23 @@
+﻿apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: default
+  labels:
+    app: demo-app
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+      - name: demo-app
+        image: ftmyrepository.azurecr.io/seroter-api-k8s:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: acr-auth
+	  restartPolicy: Always
