@@ -1,3 +1,6 @@
 source-code-uri: https://github.com/mkader/ConcourseAzureBlobContainerK8s/
 dotnet-core-sdk-tag: '2.2-stretch'
 source-code-test-proj-path: ./source-code/anc-web-api-test/anc-web-api-test.csproj 
+azure-container-registry-repository: ftmyrepository.azurecr.io/anc-web-api-k8s
+azure-container-registry-username: FTMyRepository
+azure-container-registry-password: 7TwDC=wDsMg0v8NFvARN2juln1mPdREE
