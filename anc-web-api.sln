@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anc-web-api", "anc-web-api\anc-web-api.csproj", "{20CC4679-4EDE-4D18-B01B-184FAE19F56C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "anc-web-api", "anc-web-api\anc-web-api.csproj", "{20CC4679-4EDE-4D18-B01B-184FAE19F56C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "anc-web-api-test", "anc-web-api-test\anc-web-api-test.csproj", "{AC630F10-F592-4468-ABBF-193E56BDB0BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "anc-web-api-test", "anc-web-api-test\anc-web-api-test.csproj", "{AC630F10-F592-4468-ABBF-193E56BDB0BB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{DEF61C9C-917A-4E8B-9615-8ADC396F9BAD}"
 	ProjectSection(SolutionItems) = preProject
 		ci\pipeline-ver1.yml = ci\pipeline-ver1.yml
+		ci\pipeline-ver2.yml = ci\pipeline-ver2.yml
+		ci\variables.yml = ci\variables.yml
 	EndProjectSection
 EndProject
 Global

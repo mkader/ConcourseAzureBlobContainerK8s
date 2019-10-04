@@ -1,0 +1,3 @@
+source-code-uri: https://github.com/mkader/ConcourseAzureBlobContainerK8s/
+dotnet-core-sdk-tag: '2.2-stretch'
+source-code-test-proj-path: ./source-code/anc-web-api-test/anc-web-api-test.csproj 
