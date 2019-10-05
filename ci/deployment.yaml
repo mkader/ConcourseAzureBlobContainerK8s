@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: ((azure-container-registry-repository)):latest
+        image: myrepository.azurecr.io/seroter-api-k8s:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-	  restartPolicy: Always
+      restartPolicy: Always
