@@ -30,6 +30,26 @@ resource_types:
 # Enter role-based access controls. I created a new rolebinding named "admin" with admin rights in the cluster, and mapped to the existing clusterAdmin user.
 # Now I knew that Concourse could effectively interact with my Kubernetes cluster.
 # kubectl create rolebinding admin --clusterrole=admin --user=clusterAdmin --namespace=default
+# 11.1 Grant AKS access to ACR
+# =======================
+# AKS_RESOURCE_GROUP=VSP_Resource_Group
+# AKS_CLUSTER_NAME=vs-k8s-cluster
+# ACR_RESOURCE_GROUP=VSP_Resource_Group
+# ACR_NAME=FTMyRepository
+
+# Get the id of the service principal configured for AKS
+# CLIENT_ID=$(az aks show --resource-group $AKS_RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query "servicePrincipalProfile.clientId" --output tsv)
+
+# # Get the ACR registry resource id
+# ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
+
+# # Create role assignment
+# az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
+
+# 11.2 Access with Kubernetes secret
+# ==============================
+# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mohideen.kader@titletec.com
+
 # 12.Giving AKS access to Azure Container Registry (ACR)
 # =============================================
 # https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auth-aks
@@ -358,16 +378,27 @@ jobs:
 # https://concourse-ci.org/
 # #!/bin/bash
 
-# AKS_RESOURCE_GROUP=VSP_Resource_Group
-# AKS_CLUSTER_NAME=vs-k8s-cluster
-# ACR_RESOURCE_GROUP=VSP_Resource_Group
-# ACR_NAME=FTMyRepository
 
-# # Get the id of the service principal configured for AKS
-#CLIENT_ID=$(az aks show --resource-group $AKS_RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query "servicePrincipalProfile.clientId" --output tsv)
 
-# # Get the ACR registry resource id
-# ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
 
-# # Create role assignment
-# az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
+# m_k@Azure:~$ AKS_RESOURCE_GROUP=VSP_Resource_Group
+# m_k@Azure:~$ AKS_CLUSTER_NAME=vs-k8s-cluster
+# m_k@Azure:~$ ACR_RESOURCE_GROUP=VSP_Resource_Group
+# m_k@Azure:~$ ACR_NAME=FTMyRepository
+# m_k@Azure:~$ CLIENT_ID=$(az aks show --resource-group $AKS_RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query "servicePrincipalProfile.clientId" --output tsv)
+# m_k@m_k:~$ ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
+# mohideen_kader@Azure:~$ az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
+# {
+#   "canDelegate": null,
+#   "id": "/subscriptions/1ff34b20-ae5c-4f24-94e2-c5e60f20d1fe/resourceGroups/VSP_Resource_Group/providers/Microsoft.ContainerRegistry/registries/FTMyRepository/providers/Microsoft.Authorization/roleAssignments/49d70675-f177-45a2-8bd1-94cfa75ec9cb",
+#   "name": "49d70675-f177-45a2-8bd1-94cfa75ec9cb",
+#   "principalId": "e18094f9-d925-4c77-a910-bc212a90b293",
+#   "principalName": "api://97c55954-4445-4c30-a104-bf21af88b954",
+#   "principalType": "ServicePrincipal",
+#   "resourceGroup": "VSP_Resource_Group",
+#   "roleDefinitionId": "/subscriptions/1ff34b20-ae5c-4f24-94e2-c5e60f20d1fe/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d",
+#   "roleDefinitionName": "AcrPull",
+#   "scope": "/subscriptions/1ff34b20-ae5c-4f24-94e2-c5e60f20d1fe/resourceGroups/VSP_Resource_Group/providers/Microsoft.ContainerRegistry/registries/FTMyRepository",
+#   "type": "Microsoft.Authorization/roleAssignments"
+# }
+# m_k@Azure:~$
