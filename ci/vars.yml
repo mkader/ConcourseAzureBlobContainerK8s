@@ -1,0 +1,29 @@
+source-code-uri: https://github.com/mkader/ConcourseAzureBlobContainerK8s/
+dotnet-core-sdk-tag: '2.2-stretch'
+source-code-api-proj-path: ./source-code/anc-web-api/anc-web-api.csproj 
+source-code-test-proj-path: ./source-code/anc-web-api-test/anc-web-api-test.csproj 
+source-code-ci-folder: ./source-code/ci
+azure-container-registry-repository: ftmyrepo.azurecr.io/anc-web-api-k8s
+azure-container-registry-username: FTMyRepo
+azure-container-registry-password: 7TwDC=wD...0v8NFv...2juln...dREE
+azure-blobstore-storage-account-name: vspstorageaccountblob
+azure-blobstore-storage-account-key: IHn/ig9gZX4Y7TwDC=wD...0v8NFv...2juln...dREEsU27TwDC=wD...0v8NFv...2juln...dREEVijxu0Gky3lQ==
+azure-blobstore-container-name: ftcoreapp
+azure-blobstore-versioned-file: anc-web-api.tar.gz
+github-git-uri: git@github.com:mkader/ConcourseAzureBlobContainerK8s.git
+github-git-branch: version
+github-git-file: version
+azure-kubernetes-service-server: https://vs-k8s.hcp.usa.azmk8s.io:443
+azure-kubernetes-service-token : qhPe7TwDC=wD...0v8NFv...2juln...dREE80VWw3dxWD...0v8NFv...2juln...dREE3dH3Hh19Yq2Q5EjZtpQSVBNH1rM
+github-private-key: |
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIJKQIBAAKCAgEA5d5EjkSLVPrkucd7/qIoUGd6tYZeMMJrGG7rvQJP6Wu+A/Qx
+  ...
+  eyS/9BDQykIsMJTR8wx2gsBodNsLtLY4BjbIvOqgHs+pZh2tFtIwRNcYOtrG
+  -----END RSA PRIVATE KEY-----
+azure-certificate_authority: |
+  -----BEGIN CERTIFICATE-----
+  MIIEyDCCArCgAwIBAgIRANRCUgFMTWx3idaERxfuOE4wDQYJKoZIhvcNAQELBQAw
+  ...
+  WY4nCoLcb8b51w0E+v2TWOWR2t8FfQD/sI3zeQ==
+  -----END CERTIFICATE-----
