@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: demo-app
-        image: {{azure-container-registry-repository}}:latest
+        image: ftmyrepository.azurecr.io/anc-web-api-k8s:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
