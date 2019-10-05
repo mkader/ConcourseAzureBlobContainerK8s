@@ -18,6 +18,4 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-	  imagePullSecrets:
-	  - name: acr-auth
-      restartPolicy: Always
+	  restartPolicy: Always
