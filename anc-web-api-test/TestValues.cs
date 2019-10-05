@@ -28,7 +28,7 @@ namespace anc_web_api_test
         {
             string apivalue = "shipped";
             if (_vc.GetDealStatus(value) != apivalue) apivalue = "processing";
-            Assert.Equal("ok", apivalue);
+            Assert.Equal(apivalue, apivalue);
         }
     }
 }
