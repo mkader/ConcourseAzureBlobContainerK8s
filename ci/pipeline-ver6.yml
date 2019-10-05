@@ -364,7 +364,7 @@ jobs:
 #    Proxy running on http://127.0.0.1:8001/
 # run azure docker image > docker run ftmyrepository.azurecr.io/seroter-api-k8s:latest
 
-# run azure bash 
+# run azure bash , open kube dashboadrd
 # ==============
 # to run azure k8s dashboadrd $ az aks browse --resource-group VSP_Resource_Group --name VS-k8s-Cluster
 #    To view the console, please open https://gateway11.southcentralus.console.azure.com/n/cc-6a8dba8d/cc-6a8dba8d/proxy/8001/ in a new tab
