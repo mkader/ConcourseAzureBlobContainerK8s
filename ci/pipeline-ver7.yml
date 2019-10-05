@@ -78,8 +78,6 @@ jobs:
             # dotnet tool install --global dotnet-sonarscanner --version 4.7.1
             # dotnet-sonarscanner begin /k:"anc-web-api" /d:sonar.host.url="http://localhost:9000" /d:sonar.login="88b2f1a53409ce7cd4bb0f7acf6c95113517853c"
             # dotnet build
-  - task: code-analysis
-    file: ((source-code-ci-folder))/analyze.yml
   
 # 4. second job produces a container
 # ==================================
