@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ci", "ci", "{DEF61C9C-917A-
 		ci\pipeline-ver4.yml = ci\pipeline-ver4.yml
 		ci\pipeline-ver5.yml = ci\pipeline-ver5.yml
 		ci\pipeline-ver6.yml = ci\pipeline-ver6.yml
+		ci\pipeline-ver7.yml = ci\pipeline-ver7.yml
 		ci\service.yaml = ci\service.yaml
 		ci\variables.yml = ci\variables.yml
 	EndProjectSection

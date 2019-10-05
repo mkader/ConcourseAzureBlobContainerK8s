@@ -1,0 +1,60 @@
+---
+resources:
+# 1. Pulling source code
+# ======================
+# declare resources, Gave the resource a name ("source-code") and identified where the code lives. 
+# when i deploy a pipeline, Concourse produces containers that "check" resources on a schedule for any changes that should trigger a pipeline.
+- name: source-code
+  type: git
+  icon: github-circle
+  source:
+    uri: {{source-code-uri}}
+    branch: master
+
+# list out jobs
+jobs:
+# 2. Running unit tests   
+# =========================
+# defined a job to execute unit tests.
+# A job has a build plan. That build plan contains any of three things: 1. get steps (to retrieve a resource), 
+# 2. put steps (to push something to a resource), 3.and task steps (to run a script). 
+# Our job below has one get step (to retrieve source code), and one task (to execute the xUnit tests).
+
+# Let's break it down. First, my "plan" gets the source-code resource, 
+# then I set "trigger: true" Concourse will kick off this job whenever it detects a change in the source code.
+# Next, my build plan has a "task" step. Tasks run in containers, so you need to choose a base image that runs the user-defined script. 
+# I chose the MS-provided .NET Core image so that I'd be confident it had all the necessary .NET tooling installed. 
+# Note that my task has an "input." Since tasks are like functions, they have inputs and outputs. 
+# Anything I input into the task is mounted into the container and is available to any scripts. 
+# So, by making the source-code an input, my shell script can party on the source code retrieved by Concourse.
+# Finally, I embedded a short script that invokes the "dotnet test" command. 
+
+# From the fly CLI, I deploy pipelines with the following command: fly -t rs set-pipeline -c pipeline-ver2.yml -p pipeline-ver2 --load-vars-from "variables.yml"
+# That command says to use the "rs" target (which points to a given Concourse instance), 
+# use the YAML file holding the pipeline, and name this pipeline azure-k8s-rev1. 
+# It deployed instantly, and looked like this in the Concourse web dashboard.
+# piepline is [source-code]-----[run-unit-tests]
+
+# After unpausing the pipeline so that it came alive, I saw the "run unit tests" job start running. 
+# It's easy to view what a job is doing, and I saw that it loaded the container image from Microsoft, 
+# mounted the source code, ran my script and turned "green" because all my tests passed.
+- name: run-unit-tests
+  plan:
+  - get: source-code
+    trigger: true
+  - task: first-task
+    config: 
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: 
+            repository: mcr.microsoft.com/dotnet/core/sdk
+            tag: {{dotnet-core-sdk-tag}}
+      inputs:
+      - name: source-code
+      run:
+          path: sh
+          args:
+          - -exec
+          - |
+            dotnet test {{source-code-test-proj-path}}
