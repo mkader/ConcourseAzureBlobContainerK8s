@@ -11,9 +11,25 @@ resources:
     uri: {{source-code-uri}}
     branch: master
 
+# 3. Producing and publishing a container image (3. & 4.)
+# ========================================================
+# A pipeline that just run tests is kinda weird. I need to do something when tests pass. In my case, I wanted to generate a Docker image. 
+# Another of the built-in Concourse resource types is "docker-image" which generates a container image and puts it into a registry. 
+# Here's the resource definition that worked with Azure Container Registry:
+# username: ((azure-registry-username)), password: ((azure-registry-password))
+# From the Azure Portal => Azure Container Registry => "Access keys" => grabbed the Username and one of the passwords.
+- name: azure-container-registry
+  type: docker-image
+  icon: docker
+  source:
+    repository: {{azure-container-registry-repository}}
+    tag: latest
+    username: {{azure-container-registry-username}}
+    password: {{azure-container-registry-password}}
+
 # list out jobs
 jobs:
-# 2. Running unit tests   
+# 2. first job Running unit tests   
 # =========================
 # defined a job to execute unit tests.
 # A job has a build plan. That build plan contains any of three things: 1. get steps (to retrieve a resource), 
@@ -29,7 +45,7 @@ jobs:
 # So, by making the source-code an input, my shell script can party on the source code retrieved by Concourse.
 # Finally, I embedded a short script that invokes the "dotnet test" command. 
 
-# From the fly CLI, I deploy pipelines with the following command: fly -t rs set-pipeline -c pipeline-ver2.yml -p pipeline-ver2 --load-vars-from "variables.yml"
+# From the fly CLI, I deploy pipelines with the following command: fly -t rs set-pipeline -c azure-k8s-rev1.yml -p azure-k8s-rev1
 # That command says to use the "rs" target (which points to a given Concourse instance), 
 # use the YAML file holding the pipeline, and name this pipeline azure-k8s-rev1. 
 # It deployed instantly, and looked like this in the Concourse web dashboard.
@@ -58,3 +74,23 @@ jobs:
           - -exec
           - |
             dotnet test {{source-code-test-proj-path}}
+
+# 4. second job produces a container
+# ==================================
+# Notice that I "get" the source code again. I also set a "passed" attribute meaning this will only run if the unit test step completes successfully. 
+# This is how you start chaining jobs together into a pipeline! Then I "put" into the registry. 
+# Recall I generated a Dockerfile from within VSc, and here, I point to it. 
+# The resource does a "docker build" with that Dockerfile, tags the resulting image as the "latest" one, and pushes to the registry.
+# fly -t rs set-pipeline -c pipeline-ver3.yml -p pipeline-ver3 --load-vars-from "variables.yml"
+# piepline is [source-code]-----[run-unit-tests]-----[source-code]-----[containerize-app]-----[azure-container-registry]
+# After it completed, the "containerize app" job ran. When that was finished, I checked Azure Container Registry and saw a new repository one with image in it.
+- name: containerize-app
+  plan:
+  - get: source-code
+    trigger: true
+    passed:
+    - run-unit-tests
+  - put: azure-container-registry
+    params:
+      build: ./source-code
+      tag_as_latest: true
