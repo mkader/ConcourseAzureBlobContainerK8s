@@ -54,6 +54,7 @@ jobs:
 # After unpausing the pipeline so that it came alive, I saw the "run unit tests" job start running. 
 # It's easy to view what a job is doing, and I saw that it loaded the container image from Microsoft, 
 # mounted the source code, ran my script and turned "green" because all my tests passed.
+# dotnet test anc-web-api-test/anc-web-api-test.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 - name: run-unit-tests
   plan:
   - get: source-code
@@ -73,7 +74,7 @@ jobs:
           args:
           - -exec
           - |
-            dotnet test {{source-code-test-proj-path}}
+            dotnet test {{source-code-test-proj-path}} /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 
 # 4. second job produces a container
 # ==================================
