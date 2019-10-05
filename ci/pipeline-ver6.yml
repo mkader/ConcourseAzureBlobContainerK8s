@@ -355,6 +355,9 @@ jobs:
 
 # run local powershell
 # ====================
+# kubectl get services 
+# kubectl get pods
+# kubectl describe pods demo-app-7fb7cbd8d6-9nrkx
 # kubectl config get-contexts
 # kubectl get secrets
 # az aks get-credentials --resource-group VSP_Resource_Group --name vs-k8s-cluster
@@ -362,7 +365,7 @@ jobs:
 # kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mohideen.kader@titletec.com
 # run azure k8s dashboadrd > az aks browse --resource-group VSP_Resource_Group --name VS-k8s-Cluster
 #    Proxy running on http://127.0.0.1:8001/
-# run azure docker image > docker run ftmyrepository.azurecr.io/seroter-api-k8s:latest
+# run azure docker image > docker run ftmyrepository.azurecr.io/anc-web-api-k8s:latest
 
 # run azure bash , open kube dashboadrd
 # ==============
