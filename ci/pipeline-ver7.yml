@@ -75,10 +75,42 @@ jobs:
           - -exec
           - |
             dotnet test {{source-code-test-proj-path}} /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
-            # dotnet tool install --global dotnet-sonarscanner --version 4.7.1
-            # dotnet-sonarscanner begin /k:"anc-web-api" /d:sonar.host.url="http://localhost:9000" /d:sonar.login="88b2f1a53409ce7cd4bb0f7acf6c95113517853c"
-            # dotnet build
-  
+            dotnet tool install --global dotnet-sonarscanner --version 4.7.1
+            apt-get update
+            apt-get -y install openjdk-8-jre
+            export PATH="$PATH:/root/.dotnet/tools"
+            dotnet-sonarscanner begin /k:"anc-web-api" /d:sonar.host.url="http://sonarqube:9000" /d:sonar.login="7f45f03131016687b9095434d0c4af42fdf660f6"
+            #dotnet sonarscanner begin /k:"anc-web-api" /d:sonar.host.url=http://sonarqube:9000 /d:sonar.cs.opencover.reportsPaths="anc-web-api-test\coverage.opencover.xml" /d:sonar.coverage.exclusions="**Tests*.cs"
+            dotnet build ./source-code/anc-web-api.sln
+            dotnet-sonarscanner end /d:sonar.login="7f45f03131016687b9095434d0c4af42fdf660f6"
+
+            #$token = [System.Text.Encoding]::UTF8.GetBytes("7f45f03131016687b9095434d0c4af42fdf660f6" + ":")
+            #$base64 = [System.Convert]::ToBase64String($token)
+ 
+            #$basicAuth = [string]::Format("Basic {0}", $base64)
+            #$headers = @{ Authorization = $basicAuth }
+            #$result = Invoke-RestMethod -Method Get -Uri http://sonarqube:9000/api/qualitygates/project_status?projectKey=anc-web-api -Headers $headers
+            #$result | ConvertTo-Json | Write-Host
+ 
+            #if ($result.projectStatus.status -eq "OK") {
+            #    Write-Host "Quality Gate Succeeded"
+            #}   else    {
+            #    throw "Quality gate failed"
+            #}
+
+- name: run-code-analysis
+  plan:
+  - get: source-code
+    trigger: true
+    passed:
+    - run-unit-tests
+  - task: code-analysis
+    params:
+      sonar-auth-token: ((sonar-auth-token))
+      sonar-url: ((sonar-url))
+      mongo-connection-string: ((mongo-connection-string))
+    file: ./source-code/ci/codeanalysis.yml 
+
 # 4. second job produces a container
 # ==================================
 # Notice that I "get" the source code again. I also set a "passed" attribute meaning this will only run if the unit test step completes successfully. 

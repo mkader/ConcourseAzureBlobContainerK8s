@@ -1,0 +1,10 @@
+platform: windows
+
+inputs:
+- name: source-code
+
+run:
+  path: powershell.exe
+  args:
+    - -File
+    - './source-code/ci/codeanalysis.ps1'
