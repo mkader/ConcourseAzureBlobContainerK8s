@@ -7,4 +7,4 @@ run:
   path: powershell.exe
   args:
     - -File
-    - './source-code/ci/codeanalysis.ps1'
+    - '/source-code/ci/codeanalysis.ps1'
