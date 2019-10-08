@@ -27,6 +27,20 @@ resources:
     username: {{azure-container-registry-username}}
     password: {{azure-container-registry-password}}
 
+- name: ms-dotnet-core-sdk
+  type: docker-image
+  icon: microsoft
+  source:
+    repository: mcr.microsoft.com/dotnet/core/sdk
+    tag: {{dotnet-core-sdk-tag}}
+ 
+#- name: stedolan-jq
+#  type: docker-image
+#  icon: stedolan
+#  source:
+#    repository: stedolan/jq
+#    tag: latest
+
 # list out jobs
 jobs:
 # 2. first job Running unit tests   
@@ -55,18 +69,16 @@ jobs:
 # It's easy to view what a job is doing, and I saw that it loaded the container image from Microsoft, 
 # mounted the source code, ran my script and turned "green" because all my tests passed.
 # dotnet test anc-web-api-test/anc-web-api-test.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
-- name: run-unit-tests
+- name: run-unit-tests-code-analysis
   plan:
   - get: source-code
     trigger: true
-  - task: first-task
+  - get: ms-dotnet-core-sdk
+  #- get: stedolan-jq
+  - task: first-task-unit-test
+    image: ms-dotnet-core-sdk
     config: 
       platform: linux
-      image_resource:
-        type: docker-image
-        source: 
-            repository: mcr.microsoft.com/dotnet/core/sdk
-            tag: {{dotnet-core-sdk-tag}}
       inputs:
       - name: source-code
       run:
@@ -75,20 +87,32 @@ jobs:
           - -exec
           - |
              dotnet test {{source-code-test-proj-path}} /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+       
+  - task: second-task-code-analysis
+    image: ms-dotnet-core-sdk
+    config: 
+      platform: linux
+      inputs:
+      - name: source-code
+      run:
+          path: sh
+          args:
+          - -exec
+          - |
              apt-get update
-             apt-get -y install jq
              apt-get -y install openjdk-8-jre
+             apt-get -y install jq
              
              dotnet tool install --global dotnet-sonarscanner --version 4.7.1
              export PATH="$PATH:/root/.dotnet/tools"
-             dotnet-sonarscanner begin /k:"anc-web-api" /d:sonar.host.url="http://sonarqube:9000" /d:sonar.login="7f45f03131016687b9095434d0c4af42fdf660f6"
-             ## dotnet sonarscanner begin /k:"anc-web-api" /d:sonar.host.url=http://sonarqube:9000 /d:sonar.cs.opencover.reportsPaths="anc-web-api-test\coverage.opencover.xml" /d:sonar.coverage.exclusions="**Tests*.cs"
-             dotnet build ./source-code/anc-web-api.sln
-             dotnet-sonarscanner end /d:sonar.login="7f45f03131016687b9095434d0c4af42fdf660f6"
+             dotnet-sonarscanner begin /k:"((source-code-name))" /d:sonar.host.url="((sonarqube-host-url))" /d:sonar.login="((sonarqube-login))"
+             ## dotnet sonarscanner begin /k:"((source-code-name))" /d:sonar.host.url=((sonarqube-host-url)) /d:sonar.cs.opencover.reportsPaths="((source-code-name))-test\coverage.opencover.xml" /d:sonar.coverage.exclusions="**Tests*.cs"
+             dotnet build ./source-code/((source-code-name)).sln
+             dotnet-sonarscanner end /d:sonar.login="((sonarqube-login))"
              
              analysisComplete=false
-             result=$(curl -X GET --header "Accept: */*" "http://sonarqube:9000/api/qualitygates/project_status?projectKey=anc-web-api" -o qgate.out)
-             eval ${qurlstr}
+             result=$(curl -X GET --header "Accept: */*" "((sonarqube-host-url))/api/qualitygates/project_status?projectKey=((source-code-name))" -o qgate.out)
+             # eval ${qurlstr}
              qgjson=`cat qgate.out`
              qgstatus=`echo $qgjson | jq -r .projectStatus.status`
              case "$qgstatus" in 
@@ -99,16 +123,16 @@ jobs:
                      "OK")
                            echo "Quality Gate Succeeded";
                            analysisComplete=true;
+                           break;
                            ;;
                      "*")
                            echo "Unknown status : $qgstatus";
                            break;
                            ;;
              esac	
-             if [ $analysisComplete == false ]; then
+             if [ $analysisComplete = false ]; then
                  exit 1;
-             fi
-    
+             fi             
 # 4. second job produces a container
 # ==================================
 # Notice that I "get" the source code again. I also set a "passed" attribute meaning this will only run if the unit test step completes successfully. 
@@ -123,7 +147,7 @@ jobs:
   - get: source-code
     trigger: true
     passed:
-    - run-unit-tests
+    - run-unit-tests-code-analysis
   - put: azure-container-registry
     params:
       build: ./source-code
