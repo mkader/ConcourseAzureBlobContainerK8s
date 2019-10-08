@@ -1,8 +1,11 @@
 source-code-uri: https://github.com/mkader/ConcourseAzureBlobContainerK8s/
 dotnet-core-sdk-tag: '2.2-stretch'
+source-code-name: anc-web-api 
 source-code-api-proj-path: ./source-code/anc-web-api/anc-web-api.csproj 
 source-code-test-proj-path: ./source-code/anc-web-api-test/anc-web-api-test.csproj 
 source-code-ci-folder: ./source-code/ci
+sonarqube-host-url: http://sonarqube:9000
+sonarqube-login: 7f45f03131016687b9095434d0c4af42fdf660f6
 azure-container-registry-repository: ftmyrepo.azurecr.io/anc-web-api-k8s
 azure-container-registry-username: FTMyRepo
 azure-container-registry-password: 7TwDC=wD...0v8NFv...2juln...dREE
