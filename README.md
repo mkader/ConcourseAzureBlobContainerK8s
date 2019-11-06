@@ -5,7 +5,7 @@ Azure K8s
 Sonar Qube Code Analysis                    
 Coverlet Code coverage                 
 
-Run using fly
+Run using fly      
 fly -t rs set-pipeline -c pipeline-ver6.yml -p pipeline-ver6 --load-vars-from "variables.yml"
 
 Defined all values in variables.yml
