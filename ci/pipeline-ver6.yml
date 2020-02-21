@@ -361,8 +361,8 @@ jobs:
 # kubectl config get-contexts
 # kubectl get secrets
 # az aks get-credentials --resource-group VSP_Resource_Group --name vs-k8s-cluster
-# kubectl create secret docker-registry acr-auth --docker-server <registry_Login_server> --docker-username <registry_username> --docker-password <registry_password> --docker-email mohideen.kader@titletec.com
-# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mohideen.kader@titletec.com
+# kubectl create secret docker-registry acr-auth --docker-server <registry_Login_server> --docker-username <registry_username> --docker-password <registry_password> --docker-email mak@tt.com
+# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mak@tt.com
 # run azure k8s dashboadrd > az aks browse --resource-group VSP_Resource_Group --name VS-k8s-Cluster
 #    Proxy running on http://127.0.0.1:8001/
 # run azure docker image > docker run ftmyrepository.azurecr.io/anc-web-api-k8s:latest
