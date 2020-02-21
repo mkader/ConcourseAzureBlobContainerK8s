@@ -48,7 +48,7 @@ resource_types:
 
 # 11.2 Access with Kubernetes secret
 # ==============================
-# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mohideen.kader@titletec.com
+# kubectl create secret docker-registry acr-auth --docker-server ftmyrepository.azurecr.io --docker-username FTMyRepository --docker-password 7TwDC=wDsMg0v8NFvARN2juln1mPdREE --docker-email mak@tt.com
 
 # 12.Giving AKS access to Azure Container Registry (ACR)
 # =============================================
